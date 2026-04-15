@@ -84,7 +84,7 @@ class Cell():
         other_y = (to_cell.__y1 + to_cell.__y2) / 2
         center_end = Point(other_x, other_y)
 
-        color = "red" if undo else "black"
+        color = "red" if undo else "blue"
         connection = Line(center_start, center_end)
         if (self.__win):
             connection.draw(self.__win.canvas, color)
@@ -109,6 +109,8 @@ class Maze():
                 self.__animate()
         self.__break_entrance_and_exit()
         self.__break_walls_r(0, 0)
+        self.__reset_cells_visited()
+        self.__solve_r(0, 0)
 
     def __create_cells(self):
         for i in range(self.num_cols):
@@ -184,6 +186,39 @@ class Maze():
                 self.__draw_cell(i, j)
                 self.__draw_cell(i, j+1)
                 self.__break_walls_r(i, j+1)
+
+    def __reset_cells_visited(self):
+        for i in range(len(self.__cells)):
+            for j in range(len(self.__cells[0])):
+                self.__cells[i][j].visited = False
+    
+    def __solve_r(self, i, j):
+        self.__animate()
+        if i == self.num_cols - 1 and j == self.num_rows - 1:
+            return True
+        curr: "Cell" = self.__cells[i][j]
+        curr.visited = True
+        if j < self.num_rows-1 and not curr.has_bottom_wall and not self.__cells[i][j+1].visited:
+            curr.draw_move(self.__cells[i][j+1])
+            if self.__solve_r(i, j+1):
+                return True
+            curr.draw_move(self.__cells[i][j+1], True)
+        if i < self.num_cols-1 and not curr.has_right_wall and not self.__cells[i+1][j].visited:
+            curr.draw_move(self.__cells[i+1][j])
+            if self.__solve_r(i+1, j):
+                return True
+            curr.draw_move(self.__cells[i+1][j], True)
+        if i > 0 and not curr.has_left_wall and not self.__cells[i-1][j].visited:
+            curr.draw_move(self.__cells[i-1][j])
+            if self.__solve_r(i-1, j):
+                return True
+            curr.draw_move(self.__cells[i-1][j], True)
+        if j > 0 and not curr.has_top_wall and not self.__cells[i][j-1].visited:
+            curr.draw_move(self.__cells[i][j-1])
+            if self.__solve_r(i, j-1):
+                return True
+            curr.draw_move(self.__cells[i][j-1], True)
+        return False
 
 def main():
     win = Window(800, 600)
